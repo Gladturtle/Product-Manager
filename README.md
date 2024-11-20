@@ -1,2 +1,8 @@
-# Product Manager
- It is a software that allows business users to manage all their inventory. It uses Tkinter for its GUI and features pie charts from MatPlotLib
+## Product Manager
+
+### Description
+The `Product_inventory.py` script uses Python to manage a warehouse of products, along with an interactive GUI from the Tkinter library and a interactive Pie Plot using the Matplotlib library.
+
+### Usage
+Run the `Product_inventory.py` script and follow the instuctions provided on the buttons and on the page itself.
+
