@@ -1,4 +1,4 @@
-##Product Manager
+## Product Manager
 
 ### Description
 The `Product_inventory.py` script uses Python to manage a warehouse of products, along with an interactive GUI from the Tkinter library and a interactive Pie Plot using the Matplotlib library.
