@@ -4,6 +4,15 @@ import numpy as np
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import StringVar
+class Product():
+    def __init__(self,name,price,quantity,volume):
+        self.name = name
+        self.quantity = quantity
+        self.price = price
+        self.volume = volume
+        self.table_format = (name,price,quantity,volume,price*quantity,volume*quantity)
+    def __str__(self):
+        return f"{self.name}_{self.price}_{self.quantity}_{self.volume}<>\\"
 class GUI:
     def __init__(self):
         self.frame_count=0
@@ -29,6 +38,10 @@ class GUI:
             self.clear_screen(self.ware_spa)
         elif self.frame_count==5:
             self.clear_screen(self.add_ware)
+        elif self.frame_count==6:
+            self.clear_screen(self.search_prod)
+        elif self.frame_count==7:
+            self.clear_screen(self.dis_prod)
         self.frame_count=0
         self.menu = tk.Frame(self.root)
         title = tk.Label(self.menu,text = "Menu",font = ("Arial",20))
@@ -49,6 +62,8 @@ class GUI:
         bt3.grid(row=1,column=0,sticky='ew')
         bt4 = tk.Button(menu_buttons,text="Warehouse Spacing",font = ("Arial",14),command=self.warehouse_spacing)
         bt4.grid(row=1,column=1,sticky='ew')
+        bt5 = tk.Button(menu_buttons,text="Search Product",font = ("Arial",14),command=self.search_product)
+        bt5.grid(row=2,column=0,sticky='ew')
 
         menu_buttons.pack(pady=150,fill='x')
 
@@ -222,12 +237,65 @@ class GUI:
         self.add_ware.pack()
     def clear_screen(self,frame):
            frame.destroy()
+    def search_product(self):
+        self.frame_count = 6
+        self.clear_screen(self.menu)
+
+        self.search_prod = tk.Frame(self.root)
+        title = tk.Label(self.search_prod,text="Search Product",font=("Arial",20))
+        title.pack(padx=10,pady=50)
+
+        question = tk.Label(self.search_prod,text="What is the name of the product?",font=('Arial',14))
+        question.pack(padx=20,pady=10)
+        prod_name = ''
+        self.enter_box = tk.Entry(self.search_prod,textvariable=prod_name)
+        self.enter_box.pack(padx=20,pady=10)
+
+        add_ware = tk.Button(self.search_prod,text="Get Product Details",font=('Arial',14),command=self.search_inv)
+        add_ware.pack(padx=10,pady=10)
+
+        back_button = tk.Button(self.search_prod,text="Return to Main Menu",font=("Arial",14),command=self.menu_frame)
+        back_button.pack(padx=10,pady=5)
+
+        self.search_prod.pack()
+    def display_product(self,prod : Product):
+        self.frame_count = 7
+        self.clear_screen(self.search_prod)
+
+        self.dis_prod = tk.Frame(self.root)
+        title = tk.Label(self.dis_prod,text="Product",font=("Arial",20))
+        title.pack(padx=10,pady=50)
+
+        name = tk.Label(self.dis_prod,text=f"Name of Product - {prod.name}",font=('Arial',14))
+        name.pack(padx=20,pady=10)
+        quantity = tk.Label(self.dis_prod,text=f"Quantity of Product - {prod.quantity}",font=('Arial',14))
+        quantity.pack(padx=20,pady=10)
+        price = tk.Label(self.dis_prod,text=f"Price of Product - {prod.price}",font=('Arial',14))
+        price.pack(padx=20,pady=10)
+        volume = tk.Label(self.dis_prod,text=f"Volume of Product - {prod.volume}",font=('Arial',14))
+        volume.pack(padx=20,pady=10)
+
+
+        back_button = tk.Button(self.dis_prod,text="Return to Main Menu",font=("Arial",14),command=self.menu_frame)
+        back_button.pack(padx=10,pady=5)
+
+        self.dis_prod.pack()
     def enter_new_prod(self):
         if (float(self.eb_3.get())*float(self.eb_4.get()))+self.B1.prod_vol>self.B1.warehouse:
                 messagebox.showerror(title='Error',message="You do not have enough space in the warehouse for adding this item")
                 self.menu_frame()
                 return
-        prod = Product(self.eb_1.get().lower(),float(self.eb_2.get()),float(self.eb_3.get()),float(self.eb_4.get()))
+        name = self.eb_1.get()
+        i = 0
+        for prod in self.B1.products:
+            if prod.name.lower()==name.lower() and prod.price==float(self.eb_2.get()) and prod.volume==float(self.eb_4.get()):
+                self.B1.products[i] = Product(prod.name,prod.price,prod.quantity + float(self.eb_3.get()),prod.volume)
+                self.B1.find_prod_vol()
+                self.menu_frame()
+                messagebox.showinfo(title="Information",message="Similar product found: Quantity updated")
+                return
+            i+=1
+        prod = Product(self.eb_1.get(),float(self.eb_2.get()),float(self.eb_3.get()),float(self.eb_4.get()))
         self.B1.add_prod(prod)
         self.B1.find_prod_vol()
         self.menu_frame()
@@ -235,7 +303,7 @@ class GUI:
     def remove_prod(self):
         ans = self.ans.get().lower()
         for prod in self.B1.products:
-            if ans==prod.name:
+            if ans.lower()==prod.name.lower():
                 if messagebox.askyesno(title="Delete Product",message="Are you sure you want to delete this product?"):
                     self.B1.products.remove(prod)
                     self.B1.find_prod_vol()
@@ -270,6 +338,12 @@ class GUI:
 
         plt.pie(arr_vol,labels=arr_name,labeldistance=0.7)
         plt.show()
+    def search_inv(self):
+        prod_name = self.enter_box.get()
+        print(prod_name)
+        prod = self.B1.find_prod(prod_name)
+        if type(prod) !=int:
+            self.display_product(prod)
 
     def on_closing(self):
         if messagebox.askyesno(title="Quit?",message="Do ya wanna quit?"):
@@ -277,15 +351,7 @@ class GUI:
                 self.B1.save_file()
             self.root.destroy()
 
-class Product():
-    def __init__(self,name,price,quantity,volume):
-        self.name = name
-        self.quantity = quantity
-        self.price = price
-        self.volume = volume
-        self.table_format = (name,price,quantity,volume,price*quantity,volume*quantity)
-    def __str__(self):
-        return f"{self.name}_{self.price}_{self.quantity}_{self.volume}<>\\"
+
 
 class Backend():
     def __init__(self):
@@ -320,7 +386,7 @@ class Backend():
                 if "\n\n"==list_var_prod[0]:
                     flag = True
                 elif "\n\n"!=list_var_prod[0] and flag==False :
-                    P1 = Product(list_var_prod[0].lower(),float(list_var_prod[1]),float(list_var_prod[2]),float(list_var_prod[3]))
+                    P1 = Product(list_var_prod[0],float(list_var_prod[1]),float(list_var_prod[2]),float(list_var_prod[3]))
                     self.products.append(P1)   
                 else:
                     self.warehouse = float(prod)        
@@ -329,6 +395,15 @@ class Backend():
         self.prod_vol = 0
         for prod in self.products:
             self.prod_vol = self.prod_vol+prod.table_format[5]
+    def find_prod(self,name):
+        i = 0
+        for prod in self.products:
+            print(type(prod))
+            if name.lower() == prod.name.lower():
+                return self.products[i]
+            i+=1
+        messagebox.showerror(title='Error',message='No products found')
+        return 0
 
 G1 = GUI()
 
