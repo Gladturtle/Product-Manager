@@ -4,6 +4,7 @@ import numpy as np
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import StringVar
+from cryptography.fernet import Fernet
 class Product():
     def __init__(self,name,price,quantity,volume):
         self.name = name
@@ -22,12 +23,16 @@ class GUI:
         self.root = tk.Tk()
         self.root.geometry("1000x600")
         self.root.title("Product Manager")
-        self.menu_frame()
+        self.menu_frame(False)
 
         self.root.protocol("WM_DELETE_WINDOW",self.on_closing)
         self.root.mainloop()
 
-    def menu_frame(self):
+    def menu_frame(self,logged_in = True):
+        if logged_in==False:
+            self.login_in()
+            return
+        
         if self.frame_count==1:
             self.clear_screen(self.add_prod)
         elif self.frame_count==2:
@@ -42,7 +47,8 @@ class GUI:
             self.clear_screen(self.search_prod)
         elif self.frame_count==7:
             self.clear_screen(self.dis_prod)
-        self.frame_count=0
+        elif self.frame_count==8:
+            self.clear_screen(self.srt_by)
         self.menu = tk.Frame(self.root)
         title = tk.Label(self.menu,text = "Menu",font = ("Arial",20))
         title.pack(padx=10,pady=10)
@@ -64,6 +70,8 @@ class GUI:
         bt4.grid(row=1,column=1,sticky='ew')
         bt5 = tk.Button(menu_buttons,text="Search Product",font = ("Arial",14),command=self.search_product)
         bt5.grid(row=2,column=0,sticky='ew')
+        bt5 = tk.Button(menu_buttons,text="Sort By",font = ("Arial",14),command=self.sort_by)
+        bt5.grid(row=2,column=1,sticky='ew')
 
         menu_buttons.pack(pady=150,fill='x')
 
@@ -258,6 +266,30 @@ class GUI:
         back_button.pack(padx=10,pady=5)
 
         self.search_prod.pack()
+    def login_in(self):
+        self.frame_count = 9
+
+        self.login = tk.Frame(self.root)
+        title = tk.Label(self.login,text="Login",font=("Arial",20))
+        title.pack(padx=10,pady=50)
+
+        question1 = tk.Label(self.login,text="Username",font=('Arial',14))
+        question1.pack(padx=20,pady=10)
+        username = ''
+        self.enter_box1 = tk.Entry(self.login,textvariable=username)
+        self.enter_box1.pack(padx=20,pady=10)
+
+        question2 = tk.Label(self.login,text="Password",font=('Arial',14))
+        question2.pack(padx=20,pady=10)
+        password = ''
+        self.enter_box2 = tk.Entry(self.login,textvariable=password)
+        self.enter_box2.pack(padx=20,pady=10)
+
+        login_button = tk.Button(self.login,text="Log in",font=('Arial',14),command=self.check)
+        login_button.pack(padx=10,pady=10)
+
+
+        self.login.pack()
     def display_product(self,prod : Product):
         self.frame_count = 7
         self.clear_screen(self.search_prod)
@@ -280,6 +312,36 @@ class GUI:
         back_button.pack(padx=10,pady=5)
 
         self.dis_prod.pack()
+    def sort_by(self):
+        self.frame_count = 8
+        self.clear_screen(self.menu)
+
+        self.srt_by = tk.Frame(self.root)
+        title = tk.Label(self.srt_by,text = "Sort By",font = ("Arial",20))
+        title.pack(padx=10,pady=10)
+
+        sub_title = tk.Label(self.srt_by,text="Sort the items by",font = ("Arial",14))
+        sub_title.pack(padx=10,pady=10)
+
+        menu_buttons = tk.Frame(self.srt_by)
+        menu_buttons.columnconfigure(0,weight=1)
+        menu_buttons.columnconfigure(1,weight=1)
+
+        bt1 = tk.Button(menu_buttons,text="Name",font = ("Arial",14),command = self.sb_n)
+        bt1.grid(row=0,column=0,sticky='ew')
+        bt2 = tk.Button(menu_buttons,text="Price",font = ("Arial",14),command= self.sb_p)
+        bt2.grid(row=0,column=1,sticky='ew')
+        bt3 = tk.Button(menu_buttons,text="Quantity",font = ("Arial",14),command=self.sb_q)
+        bt3.grid(row=1,column=0,sticky='ew')
+        bt4 = tk.Button(menu_buttons,text="Volume",font = ("Arial",14),command=self.sb_v)
+        bt4.grid(row=1,column=1,sticky='ew')
+
+        menu_buttons.pack(pady=150,fill='x')
+
+        back_button = tk.Button(self.srt_by,text="Return to Main Menu",font=("Arial",14),command=self.menu_frame)
+        back_button.pack(padx=10,pady=5)
+
+        self.srt_by.pack()
     def enter_new_prod(self):
         if (float(self.eb_3.get())*float(self.eb_4.get()))+self.B1.prod_vol>self.B1.warehouse:
                 messagebox.showerror(title='Error',message="You do not have enough space in the warehouse for adding this item")
@@ -350,6 +412,37 @@ class GUI:
             if messagebox.askyesno(title="Save",message="Do you wanna save your work?"):
                 self.B1.save_file()
             self.root.destroy()
+    def sb_p(self):
+        self.B1.sort_by('price')
+        self.menu_frame()
+        messagebox.showinfo(title="Sorted",message="Your products are successfully sorted!")
+    def sb_q(self):
+        self.B1.sort_by('quantity')
+        self.menu_frame()
+        messagebox.showinfo(title="Sorted",message="Your products are successfully sorted!")
+    def sb_n(self):
+        self.B1.sort_by('name')
+        self.menu_frame()
+        messagebox.showinfo(title="Sorted",message="Your products are successfully sorted!")
+    def sb_v(self):
+        self.B1.sort_by('volume')
+        self.menu_frame()
+        messagebox.showinfo(title="Sorted",message="Your products are successfully sorted!")
+    def check(self):
+        username = self.enter_box1.get()
+        password = self.enter_box2.get()
+        try:
+            file = open('password.txt','r')
+        except (FileNotFoundError):
+            file = open('password.txt','a')
+            file.close()
+            file = open('password.txt','r')
+        read_str = file.read()
+        f = Fernet('TqthRTNy9yr-kQF4YzmrckCwoJb6KGCvWdn5GKBlejA=')
+        read_str = f.decrypt(read_str)
+        type(read_str)
+        
+
 
 
 
@@ -404,6 +497,25 @@ class Backend():
             i+=1
         messagebox.showerror(title='Error',message='No products found')
         return 0
+
+
+    def sort_by(self,what: str):
+        temp = 0
+        t = 0
+        for i in range(0,len(self.products)-1):
+            temp = i
+            for j in range(i+1,len(self.products)):
+                if getattr(self.products[temp],what) > getattr(self.products[j],what):
+                    temp = j
+            t = self.products[i]
+            self.products[i] = self.products[temp]
+            self.products[temp] = t
+            
+
+
+
+            
+            
 
 G1 = GUI()
 
