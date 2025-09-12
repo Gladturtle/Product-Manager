@@ -440,7 +440,17 @@ class GUI:
         read_str = file.read()
         f = Fernet('TqthRTNy9yr-kQF4YzmrckCwoJb6KGCvWdn5GKBlejA=')
         read_str = f.decrypt(read_str)
-        type(read_str)
+        read_str = read_str.decode("utf-8")
+        read_str = read_str.split('\n')
+        if read_str[0] == username and read_str[1] == password:
+            self.clear_screen(self.login)
+            self.menu_frame(True)
+            messagebox.showinfo(title="Validated",message=f"Logged in\n Welcome, {username}")
+        else:
+            self.clear_screen(self.login)
+            self.menu_frame(False)
+            messagebox.showerror(title='Invalid',message="Wrong username or password")
+            
         
 
 
